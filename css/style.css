@@ -121,3 +121,19 @@ body.qr-page {
 canvas {
     margin-top: 10px;
 }
+
+
+/* LOGO EN ESQUINA SUPERIOR DERECHA */
+
+.logo-container {
+    position: fixed;   /* queda fijo */
+    top: 15px;         /* separación arriba */
+    right: 15px;       /* separación derecha */
+    z-index: 999;
+}
+
+.logo {
+    width: 80px;       /* tamaño del logo */
+    height: auto;
+    border-radius: 10px; /* opcional */
+}
