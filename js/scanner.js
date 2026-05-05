@@ -2,91 +2,91 @@ const participantes = [
 
   // ================= MEDICINA =================
   {
-    numero: 1,
+    id: 1,
     nombre: "Cabrera Lorenzo Esvin Santiago",
     grado: "Quinto Medicina",
     total: 0
   },
   {
-    numero: 2,
+    id: 2,
     nombre: "Cortéz Hernández Jeferson José Luis",
     grado: "Quinto Medicina",
     total: 0
   },
   {
-    numero: 3,
+    id: 3,
     nombre: "Cristóbal Pérez Lesly Beatriz",
     grado: "Quinto Medicina",
     total: 0
   },
   {
-    numero: 4,
+    id: 4,
     nombre: "Delgado Vicente Noe Michael",
     grado: "Quinto Medicina",
     total: 0
   },
   {
-    numero: 5,
+    id: 5,
     nombre: "Diego Morales Alexis Denilson",
     grado: "Quinto Medicina",
     total: 0
   },
   {
-    numero: 6,
+    id: 6,
     nombre: "García Juárez María Del Carmen",
     grado: "Quinto Medicina",
     total: 0
   },
   {
-    numero: 7,
+    id: 7,
     nombre: "Jiménez Cortéz Yeni Clarisa",
     grado: "Quinto Medicina",
     total: 0
   },
   {
-    numero: 8,
+    id: 8,
     nombre: "Katherin Mishel Ralda Jiménez",
     grado: "Quinto Medicina",
     total: 0
   },
   {
-    numero: 9,
+    id: 9,
     nombre: "Pérez Vaíl Keily Lisbeth",
     grado: "Quinto Medicina",
     total: 0
   },
   {
-    numero: 10,
+    id: 10,
     nombre: "Ramírez Rodríguez Miqueas Emanuel",
     grado: "Quinto Medicina",
     total: 0
   },
   {
-    numero: 11,
+    id: 11,
     nombre: "Reyes Gómez Jorge Geovany",
     grado: "Quinto Medicina",
     total: 0
   },
   {
-    numero: 12,
+    id: 12,
     nombre: "Vásquez Lucas Fernando Ángel",
     grado: "Quinto Medicina",
     total: 0
   },
   {
-    numero: 13,
+    id: 13,
     nombre: "Vásquez Luis Vivian Dayana",
     grado: "Quinto Medicina",
     total: 0
   },
   {
-    numero: 14,
+    id: 14,
     nombre: "Velásquez Cabrera Mynor",
     grado: "Quinto Medicina",
     total: 0
   },
   {
-    numero: 15,
+    id: 15,
     nombre: "Jonatan Margarito",
     grado: "Quinto Medicina",
     total: 0
@@ -94,61 +94,61 @@ const participantes = [
 
   // ================= ENFERMERÍA =================
   {
-    numero: 1,
+    id: 1,
     nombre: "Alonzo Pérez Yaquelín Anayeli",
     grado: "Quinto Enfermería",
     total: 0
   },
   {
-    numero: 2,
+    id: 2,
     nombre: "Cabrera López Yuliza",
     grado: "Quinto Enfermería",
     total: 0
   },
   {
-    numero: 3,
+    id: 3,
     nombre: "Camacho López Glendy Lisbeth",
     grado: "Quinto Enfermería",
     total: 0
   },
   {
-    numero: 4,
+    id: 4,
     nombre: "Cortéz Ramos Yeni Carina",
     grado: "Quinto Enfermería",
     total: 0
   },
   {
-    numero: 5,
+    id: 5,
     nombre: "Díaz González Esmeralda Liseth",
     grado: "Quinto Enfermería",
     total: 0
   },
   {
-    numero: 6,
+    id: 6,
     nombre: "Hernández Díaz Sabina Lorenza",
     grado: "Quinto Enfermería",
     total: 0
   },
   {
-    numero: 7,
+    id: 7,
     nombre: "López Vásquez Keily Dayana",
     grado: "Quinto Enfermería",
     total: 0
   },
   {
-    numero: 8,
+    id: 8,
     nombre: "Ortega Pérez Leidy Noemí",
     grado: "Quinto Enfermería",
     total: 0
   },
   {
-    numero: 9,
+    id: 9,
     nombre: "Pérez Vásquez Vilma Daniela",
     grado: "Quinto Enfermería",
     total: 0
   },
   {
-    numero: 10,
+    id: 10,
     nombre: "Rabanales Gómez Neidy Fabiola",
     grado: "Quinto Enfermería",
     total: 0
@@ -156,31 +156,31 @@ const participantes = [
 
   // ================= DERECHO =================
   {
-    numero: 1,
+    id: 1,
     nombre: "Marroquín Escobar Karla Andrea",
     grado: "Quinto Derecho",
     total: 0
   },
   {
-    numero: 2,
+    id: 2,
     nombre: "Monterroso Monterroso Beberly Belinda",
     grado: "Quinto Derecho",
     total: 0
   },
   {
-    numero: 3,
+    id: 3,
     nombre: "Reyes Monterroso Mariana Analy",
     grado: "Quinto Derecho",
     total: 0
   },
   {
-    numero: 4,
+    id: 4,
     nombre: "Vásquez Escobar Abraham Santos",
     grado: "Quinto Derecho",
     total: 0
   },
   {
-    numero: 5,
+    id: 5,
     nombre: "Vicente Chile Ashle Mariza",
     grado: "Quinto Derecho",
     total: 0
@@ -188,25 +188,25 @@ const participantes = [
 
   // ================= ODONTOLOGÍA =================
   {
-    numero: 1,
+    id: 1,
     nombre: "Díaz Gómez José Mario",
     grado: "Quinto Odontología",
     total: 0
   },
   {
-    numero: 2,
+    id: 2,
     nombre: "Jiménez Gómez Rolfi Hernán",
     grado: "Quinto Odontología",
     total: 0
   },
   {
-    numero: 3,
+    id: 3,
     nombre: "Méndez Méndez Anderson Hermenegildo",
     grado: "Quinto Odontología",
     total: 0
   },
   {
-    numero: 4,
+    id: 4,
     nombre: "Vásquez Gómez Melvin Gabriel",
     grado: "Quinto Odontología",
     total: 0
@@ -214,73 +214,73 @@ const participantes = [
 
   // ================= MECÁNICA =================
   {
-    numero: 1,
+    id: 1,
     nombre: "Alvarez Gantenbein Mario Estuardo",
     grado: "Quinto Mecánica",
     total: 0
   },
   {
-    numero: 2,
+    id: 2,
     nombre: "Calderón Rivera Edison Iván",
     grado: "Quinto Mecánica",
     total: 0
   },
   {
-    numero: 3,
+    id: 3,
     nombre: "Carreto Morales Néstor Hernán",
     grado: "Quinto Mecánica",
     total: 0
   },
   {
-    numero: 4,
+    id: 4,
     nombre: "Delgado Vicente Elmer David",
     grado: "Quinto Mecánica",
     total: 0
   },
   {
-    numero: 5,
+    id: 5,
     nombre: "Escobar Méndez Isaac Esaú",
     grado: "Quinto Mecánica",
     total: 0
   },
   {
-    numero: 6,
+    id: 6,
     nombre: "García Flores Gilver Francisco Josué",
     grado: "Quinto Mecánica",
     total: 0
   },
   {
-    numero: 7,
+    id: 7,
     nombre: "López Romero Brayan Daniel",
     grado: "Quinto Mecánica",
     total: 0
   },
   {
-    numero: 8,
+    id: 8,
     nombre: "Marroquín Ramírez Wilfrido Daniel",
     grado: "Quinto Mecánica",
     total: 0
   },
   {
-    numero: 9,
+    id: 9,
     nombre: "Monterroso López Víctor Geovany",
     grado: "Quinto Mecánica",
     total: 0
   },
   {
-    numero: 10,
+    id: 10,
     nombre: "Orozco Vásquez Brayan Martín",
     grado: "Quinto Mecánica",
     total: 0
   },
   {
-    numero: 11,
+    id: 11,
     nombre: "Pérez Carreto Denilson Miguel",
     grado: "Quinto Mecánica",
     total: 0
   },
   {
-    numero: 12,
+    id: 12,
     nombre: "Romero López Iberton Alexis",
     grado: "Quinto Mecánica",
     total: 0
@@ -288,13 +288,13 @@ const participantes = [
 
   // ================= ELECTROMECÁNICA =================
   {
-    numero: 1,
+    id: 1,
     nombre: "Agustín López Oscar Rene",
     grado: "Quinto Electromecánica",
     total: 0
   },
   {
-    numero: 2,
+    id: 2,
     nombre: "Castillo Barrios Brandon Osiel",
     grado: "Quinto Electromecánica",
     total: 0
@@ -302,7 +302,7 @@ const participantes = [
 
   // ================= MÚSICA =================
   {
-    numero: 1,
+    id: 1,
     nombre: "López Romero Ester Estefany",
     grado: "Quinto Música",
     total: 0
@@ -310,25 +310,25 @@ const participantes = [
 
   // ================= ELECTRICIDAD =================
   {
-    numero: 1,
+    id: 1,
     nombre: "López Gabriel Abner Gudiel",
     grado: "Quinto Electricidad",
     total: 0
   },
   {
-    numero: 2,
+    id: 2,
     nombre: "López Romero Andy Leonardo",
     grado: "Quinto Electricidad",
     total: 0
   },
   {
-    numero: 3,
+    id: 3,
     nombre: "Vicente Pérez Domingo Frisly",
     grado: "Quinto Electricidad",
     total: 0
   },
   {
-    numero: 4,
+    id: 4,
     nombre: "Vicente Vicente Axel Aroldo",
     grado: "Quinto Electricidad",
     total: 0
@@ -336,25 +336,25 @@ const participantes = [
 
   // ================= DISEÑO GRÁFICO =================
   {
-    numero: 1,
+    id: 1,
     nombre: "Díaz Pérez Werner Misael",
     grado: "Quinto Diseño Gráfico",
     total: 0
   },
   {
-    numero: 2,
+    id: 2,
     nombre: "Gómez Mejía Geraldine Zulimar",
     grado: "Quinto Diseño Gráfico",
     total: 0
   },
   {
-    numero: 3,
+    id: 3,
     nombre: "Pérez Romero Brailin Geovany",
     grado: "Quinto Diseño Gráfico",
     total: 0
   },
   {
-    numero: 4,
+    id: 4,
     nombre: "Monterroso Rodríguez Dulce Analucia",
     grado: "Quinto Diseño Gráfico",
     total: 0
@@ -362,25 +362,25 @@ const participantes = [
 
   // ================= FINANZAS Y ADMO =================
   {
-    numero: 1,
+    id: 1,
     nombre: "De León Mazariegos Jennifer Anabelly",
     grado: "Quinto Finanzas y Administración",
     total: 0
   },
   {
-    numero: 2,
+    id: 2,
     nombre: "Sac Camacho Eddy Francisco",
     grado: "Quinto Finanzas y Administración",
     total: 0
   },
   {
-    numero: 3,
+    id: 3,
     nombre: "Sergio Gonsales",
     grado: "Quinto Finanzas y Administración",
     total: 0
   },
   {
-    numero: 4,
+    id: 4,
     nombre: "Werner Marokin Díaz",
     grado: "Quinto Finanzas y Administración",
     total: 0
@@ -388,7 +388,7 @@ const participantes = [
 
   // ================= ELECTRÓNICA =================
   {
-    numero: 1,
+    id: 1,
     nombre: "Monterroso Gómez Alan Rene",
     grado: "Quinto Electrónica",
     total: 0
