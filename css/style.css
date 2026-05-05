@@ -8,11 +8,28 @@
 }
 
 /* =========================
-   BODY GENERAL (LOGIN POR DEFECTO)
-========================= */
+   BODY GENERAL (LOGIN POR DEFECTO)/* Fondo con transparencia */
+
 body {
+    margin: 0;
+    padding: 0;
+
+    /* Imagen de fondo */
+    background: linear-gradient(
+            rgba(0, 0, 0, 0.5),   /* negro transparente */
+            rgba(0, 0, 0, 0.5)
+        ),
+        url("https://scontent.fgua3-5.fna.fbcdn.net/v/t39.30808-6/476832896_122192120672178235_2371946311053940462_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=53a332&_nc_ohc=UBGe93V2zQYQ7kNvwFsv9l_&_nc_oc=AdpV_VenWHJerMm1Y9L74chmKomxouE_SGI1VJH2fpeAvG4X2fImW4YDHMCdyvKORFZ3ETABxMkhWIIHgWb3Lmfv&_nc_zt=23&_nc_ht=scontent.fgua3-5.fna&_nc_gid=BvnFDq0xyY1aO3SiIzMX2A&_nc_ss=7b289&oh=00_Af6jg5CJ_9_9JRuUCZrwu-G2b6b0Asa4_obDqFMFDrJV9A&oe=6A002458");
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+
+    min-height: 100vh;
+    color: white;
+    text-align: center;
     font-family: Arial, sans-serif;
-    background: #f5f7fa;
 }
 
 /* =========================
@@ -94,10 +111,10 @@ body.qr-page {
 
 /* TARJETAS QR */
 #qrs div {
-    background: white;
+    background: rgba(255, 255, 255, 0);
     padding: 15px;
     border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 8px rgba(253, 252, 252, 0.212);
 }
 
 /* CANVAS QR */

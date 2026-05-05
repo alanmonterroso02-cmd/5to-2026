@@ -7,29 +7,26 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="admin-container">
-        <h1>Historial </h1>
-        <h1>Promoción 2026</h1>
-    
-        <!-- SELECT PARA ELEGIR COLECCIÓN -->
-        <select id="coleccion">
-    
-        </select>
-    
-        <br><br>
-    
-        <button onclick="cargarDatos()">
-            Ver Datos
-        </button>
-    
-        <button onclick="exportarExcel()">
-            Descargar Excel
-        </button>
-    
-        <div id="listaPagos"></div>
 
-    </div>
+    <h1>Historial </h1>
+    <h1>Promoción 2026</h1>
 
+    <!-- SELECT PARA ELEGIR COLECCIÓN -->
+    <select id="coleccion">
+
+    </select>
+
+    <br><br>
+
+    <button onclick="cargarDatos()">
+        Ver Datos
+    </button>
+
+    <button onclick="exportarExcel()">
+        Descargar Excel
+    </button>
+
+    <div id="listaPagos"></div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script type="module" src="js/reportes.js"></script>
