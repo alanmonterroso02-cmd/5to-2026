@@ -36,7 +36,7 @@ body {
    LOGIN
 ========================= */
 .login-container {
-    background: white;
+    background: rgba(255, 255, 255, 0.071);
     padding: 30px;
     border-radius: 12px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
@@ -125,15 +125,20 @@ canvas {
 
 /* LOGO EN ESQUINA SUPERIOR DERECHA */
 
+/* LOGO DETRÁS DEL TEXTO */
+
 .logo-container {
-    position: fixed;   /* queda fijo */
-    top: 15px;         /* separación arriba */
-    right: 15px;       /* separación derecha */
-    z-index: 999;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+
+    /* detrás del contenido */
+    z-index: -1;
+
+    opacity: 0.8; /* transparencia */
 }
 
 .logo {
-    width: 80px;       /* tamaño del logo */
+    width: 180px; /* más grande si quieres */
     height: auto;
-    border-radius: 10px; /* opcional */
 }
