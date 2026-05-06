@@ -133,11 +133,11 @@ canvas {
     right: 20px;
 
     z-index: -1;
-    opacity: 0.25;
+    opacity: 0.9;
 }
 
 .logo {
-    width: 180px;   /* tamaño para PC */
+    width: 250px;   /* tamaño para PC */
     height: auto;
 }
 
@@ -145,7 +145,7 @@ canvas {
 
 @media (max-width: 768px) {
     .logo {
-        width: 90px;   /* más pequeño en celular */
+        width: 110px;   /* más pequeño en celular */
     }
 
     .logo-container {
