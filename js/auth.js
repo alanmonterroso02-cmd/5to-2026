@@ -1,5 +1,5 @@
-var usuario = "admin";
-var password = "admin";
+var usuario = "usuario";
+var password = "2026";
 
 function login() {
     var user = document.getElementById("user").value;
