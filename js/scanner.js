@@ -263,7 +263,7 @@ const participantes = [
   },
   {
     id: 9,
-    nombre: "Monterroso López Víctor Geovany",
+    nombre: " López Víctor Geovany",
     grado: "Quinto Mecánica",
     total: 0
   },
@@ -369,7 +369,7 @@ const participantes = [
   },
   {
     id: 2,
-    nombre: "Sac Camacho Eddy Francisco",
+    nombre: "Sac Camacho Edy Francisco",
     grado: "Quinto Finanzas y Administración",
     total: 0
   },
