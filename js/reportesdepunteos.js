@@ -1,4 +1,4 @@
-import { db } from "./firebase-config.js";
+import { db } from "./firebas2.js";
 
 import {
     collection,
@@ -64,12 +64,12 @@ window.cargarDatos = async function () {
             <div>
                 <h3>${d.nombre}</h3>
                 <p>Especialidad: ${d.grado}</p>
-                <p>Monto: Q${d.monto}</p>
+                <p>Puntos: ${d.monto}</p>
             </div>
         `;
     });
 
-    html += `<h2>Total: Q${total}</h2>`;
+   // html += `<h2>Total: Q${total}</h2>`;
     listaPagos.innerHTML = html;
 };
 
@@ -91,7 +91,7 @@ window.exportarExcel = async function () {
         datos.push({
             Nombre: d.nombre,
             Especialidad: d.grado,
-            Monto: d.monto
+            Puntos: d.monto
         });
     });
 

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial de Pagos</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Dentro del body, al inicio -->
+    <div class="logo-container">
+        <img src="img/logo.png" alt="Logo Promoción 2026" class="logo">
+    </div>
+    <h1>Historial </h1>
+    <h1>Promoción 2026</h1>
+
+    <!-- SELECT PARA ELEGIR COLECCIÓN -->
+    <select id="coleccion">
+
+    </select>
+
+    <br><br>
+
+    <button onclick="cargarDatos()">
+        Ver Datos
+    </button>
+
+    <button onclick="exportarExcel()">
+        Descargar Excel
+    </button>
+
+    <div id="listaPagos"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script type="module" src="js/reportesdepunteos.js"></script>
+
+</body>
+</html>
