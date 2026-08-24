@@ -34,7 +34,7 @@ body {
 .logo-container {
     position: fixed;
     top: 400px;
-    right: 100px;
+    right: 150px;
     z-index: 10; /* 🔥 IMPORTANTE: arriba de todo */
 }
 
