@@ -75,3 +75,110 @@ button {
     cursor: pointer;
     font-size: 16px;
 }
+
+/* =========================
+   FORMULARIO DE TAREAS
+========================= */
+.form-tareas {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+    margin-top: 15px;
+}
+
+.form-tareas label {
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+select,
+input[type="text"],
+input[type="file"] {
+    width: 100%;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    font-size: 15px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #222;
+}
+
+/* =========================
+   AGREGAR CURSO
+========================= */
+.agregar-curso {
+    margin-top: 20px;
+    text-align: left;
+}
+
+.agregar-curso summary {
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+/* =========================
+   BARRA DE PROGRESO
+========================= */
+.barra-progreso {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    overflow: hidden;
+    height: 12px;
+    margin-top: 10px;
+}
+
+.progreso {
+    height: 100%;
+    width: 0%;
+    background: #4caf50;
+    transition: width 0.2s ease;
+}
+
+#mensajeEstado {
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+/* =========================
+   LISTA DE TAREAS
+========================= */
+#listaTareas {
+    margin-top: 15px;
+    text-align: left;
+}
+
+.item-tarea {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+}
+
+.item-tarea button {
+    margin-top: 8px;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    margin: 25px 0;
+}
+
+.limite-curso {
+    text-align: left;
+    font-size: 0.9em;
+    margin-top: -8px;
+    margin-bottom: 10px;
+}
+
+.limite-curso.ok {
+    color: #8ef58e;
+}
+
+.limite-curso.vencido {
+    color: #ff8080;
+    font-weight: bold;
+}

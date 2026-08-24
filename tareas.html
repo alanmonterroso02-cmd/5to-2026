@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir Tareas - Promoción 2026</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="admin-container">
+
+        <h1>Subir Tareas</h1>
+        <h2>Promoción 2026</h2>
+
+        <!-- ================= FORMULARIO DE SUBIDA ================= -->
+        <form id="formTarea" class="form-tareas">
+
+            <label for="grado">Carrera</label>
+            <select id="grado" required>
+                <option value="">Seleccione carrera</option>
+            </select>
+
+            <label for="participante">Participante</label>
+            <select id="participante" required>
+                <option value="">Seleccione participante</option>
+            </select>
+
+            <label for="curso">Curso</label>
+            <select id="curso" required>
+                <option value="">Seleccione curso</option>
+            </select>
+            <p id="limiteCurso" class="limite-curso"></p>
+
+            <label for="archivo">Archivo PDF de la tarea</label>
+            <input type="file" id="archivo" accept="application/pdf,.pdf" required>
+
+            <button type="submit">Subir Tarea</button>
+
+            <div id="barraProgreso" class="barra-progreso" style="display:none;">
+                <div id="progreso" class="progreso"></div>
+            </div>
+
+            <p id="mensajeEstado"></p>
+        </form>
+
+
+        <!-- ================= VER TAREAS SUBIDAS ================= -->
+        <h2>Tareas Subidas</h2>
+
+        <select id="filtroCurso">
+            <option value="">Seleccione curso para ver tareas</option>
+        </select>
+
+        <button type="button" onclick="verTareas()">Ver Tareas</button>
+
+        <div id="listaTareas"></div>
+
+    </div>
+
+    <script type="module" src="js/tareas.js"></script>
+
+</body>
+</html>
