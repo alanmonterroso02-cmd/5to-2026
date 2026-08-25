@@ -371,9 +371,11 @@ window.verTareas = async function () {
             <div class="item-tarea">
                 <h3>${d.nombre}</h3>
                 <p>${d.grado}</p>
+                <!--
                 <a href="${d.url}" target="_blank" rel="noopener">
                     <button type="button">Ver / Descargar PDF</button>
                 </a>
+                -->
             </div>
         `;
     });
