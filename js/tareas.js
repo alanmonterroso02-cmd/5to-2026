@@ -34,6 +34,19 @@ let participantesData = [];
 let cursosData = []; // { nombre, fechaLimite (Date|null) }
 
 /* =====================================
+   SANITIZAR TEXTO PARA USAR COMO PARTE DE UN public_id DE CLOUDINARY
+   (quita tildes, '#', y cualquier otro carácter no permitido)
+===================================== */
+
+function sanitizarParaCloudinary(str) {
+    return str
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // quita tildes
+        .replace(/#/g, "")                                  // quita almohadillas
+        .replace(/[^a-zA-Z0-9/_\- ]/g, "")                   // quita cualquier otro carácter inválido
+        .trim();
+}
+
+/* =====================================
    CARGAR PARTICIPANTES (para carrera + nombre)
 ===================================== */
 
@@ -282,7 +295,7 @@ form.addEventListener("submit", async (e) => {
     mensajeEstado.textContent = "Subiendo...";
 
     try {
-        const carpeta = `tareas/${grado}/${curso}`;
+        const carpeta = `tareas/${sanitizarParaCloudinary(grado)}/${sanitizarParaCloudinary(curso)}`;
 
         const resultado = await subirACloudinary(archivo, carpeta, (pct) => {
             progreso.style.width = `${pct}%`;
