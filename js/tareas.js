@@ -32,6 +32,7 @@ const listaTareas = document.getElementById("listaTareas");
 
 let participantesData = [];
 let cursosData = []; // { nombre, fechaLimite (Date|null) }
+let subidaEnCurso = false; // usado para advertir si el usuario intenta salir mientras sube
 
 /* =====================================
    SANITIZAR TEXTO PARA USAR COMO PARTE DE UN public_id DE CLOUDINARY
@@ -45,6 +46,17 @@ function sanitizarParaCloudinary(str) {
         .replace(/[^a-zA-Z0-9/_\- ]/g, "")                   // quita cualquier otro carácter inválido
         .trim();
 }
+
+/* =====================================
+   ADVERTIR SI EL USUARIO INTENTA SALIR MIENTRAS SUBE
+===================================== */
+
+window.addEventListener("beforeunload", (e) => {
+    if (subidaEnCurso) {
+        e.preventDefault();
+        e.returnValue = "";
+    }
+});
 
 /* =====================================
    CARGAR PARTICIPANTES (para carrera + nombre)
@@ -193,9 +205,10 @@ selectCurso.addEventListener("change", actualizarLimiteCurso);
 
 /* =====================================
    SUBIR PDF A CLOUDINARY (con barra de progreso real vía XHR)
+   Incluye reintentos automáticos ante fallos de red o timeout.
 ===================================== */
 
-function subirACloudinary(archivo, carpeta, onProgreso) {
+function intentoSubidaUnica(archivo, carpeta, onProgreso) {
     return new Promise((resolve, reject) => {
         const formData = new FormData();
         formData.append("file", archivo);
@@ -209,6 +222,8 @@ function subirACloudinary(archivo, carpeta, onProgreso) {
             "POST",
             `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`
         );
+
+        xhr.timeout = 60000; // 60 segundos máximo por intento
 
         xhr.upload.onprogress = (e) => {
             if (e.lengthComputable && onProgreso) {
@@ -225,9 +240,38 @@ function subirACloudinary(archivo, carpeta, onProgreso) {
         };
 
         xhr.onerror = () => reject(new Error("Error de red al subir el archivo"));
+        xhr.ontimeout = () => reject(new Error("La subida tardó demasiado (tiempo agotado)"));
 
         xhr.send(formData);
     });
+}
+
+async function subirACloudinary(archivo, carpeta, onProgreso, onReintento) {
+    const MAX_INTENTOS = 3;
+    let ultimoError;
+
+    for (let intento = 1; intento <= MAX_INTENTOS; intento++) {
+        try {
+            return await intentoSubidaUnica(archivo, carpeta, onProgreso);
+        } catch (error) {
+            ultimoError = error;
+            console.warn(`Intento ${intento} de ${MAX_INTENTOS} falló:`, error.message);
+
+            // Solo reintentamos si es un error de red o de tiempo agotado,
+            // no si es un error de validación de Cloudinary (400, etc.)
+            const esErrorDeRed =
+                error.message.includes("red") || error.message.includes("tiempo agotado");
+
+            if (!esErrorDeRed || intento === MAX_INTENTOS) {
+                throw ultimoError;
+            }
+
+            if (onReintento) onReintento(intento + 1, MAX_INTENTOS);
+
+            // Esperar un poco antes de reintentar (1s, luego 2s)
+            await new Promise(r => setTimeout(r, intento * 1000));
+        }
+    }
 }
 
 /* =====================================
@@ -249,6 +293,12 @@ form.addEventListener("submit", async (e) => {
 
     if (!archivo) {
         alert("Seleccione un archivo");
+        return;
+    }
+
+    // Verificar conexión a internet antes de intentar subir
+    if (!navigator.onLine) {
+        alert("Tu dispositivo no tiene conexión a internet en este momento. Verifica tu Wi-Fi o datos móviles e intenta de nuevo.");
         return;
     }
 
@@ -292,14 +342,22 @@ form.addEventListener("submit", async (e) => {
 
     barraProgreso.style.display = "block";
     progreso.style.width = "0%";
-    mensajeEstado.textContent = "Subiendo...";
+    mensajeEstado.textContent = "Subiendo... No cierres esta pantalla ni bloquees el dispositivo";
+    subidaEnCurso = true;
 
     try {
         const carpeta = `tareas/${sanitizarParaCloudinary(grado)}/${sanitizarParaCloudinary(curso)}`;
 
-        const resultado = await subirACloudinary(archivo, carpeta, (pct) => {
-            progreso.style.width = `${pct}%`;
-        });
+        const resultado = await subirACloudinary(
+            archivo,
+            carpeta,
+            (pct) => {
+                progreso.style.width = `${pct}%`;
+            },
+            (intento, maxIntentos) => {
+                mensajeEstado.textContent = `Conexión inestable, reintentando (${intento}/${maxIntentos})... No cierres esta pantalla`;
+            }
+        );
 
         mensajeEstado.textContent = "Guardando en la base de datos...";
 
@@ -314,6 +372,7 @@ form.addEventListener("submit", async (e) => {
         });
 
         mensajeEstado.textContent = "Tarea subida correctamente";
+        subidaEnCurso = false;
 
         setTimeout(() => {
             barraProgreso.style.display = "none";
@@ -326,6 +385,7 @@ form.addEventListener("submit", async (e) => {
         console.error(error);
         mensajeEstado.textContent = `Error: ${error.message}`;
         barraProgreso.style.display = "none";
+        subidaEnCurso = false;
     }
 });
 
