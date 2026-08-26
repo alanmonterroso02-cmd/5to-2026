@@ -324,7 +324,7 @@ form.addEventListener("submit", async (e) => {
         selectParticipante.innerHTML = `<option value="">Seleccione participante</option>`;
     } catch (error) {
         console.error(error);
-        mensajeEstado.textContent = "Error al subir el archivo";
+        mensajeEstado.textContent = `Error: ${error.message}`;
         barraProgreso.style.display = "none";
     }
 });
