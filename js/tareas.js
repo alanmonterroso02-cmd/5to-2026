@@ -204,6 +204,86 @@ function actualizarLimiteCurso() {
 selectCurso.addEventListener("change", actualizarLimiteCurso);
 
 /* =====================================
+   COMPRIMIR PDF ANTES DE SUBIR
+   Renderiza cada página como imagen (resolución moderada) y
+   reconstruye un PDF más liviano. Si algo falla, se usa el
+   archivo original sin comprimir (nunca bloquea la subida).
+===================================== */
+
+async function comprimirPDF(archivoOriginal, onProgreso) {
+    // Solo vale la pena comprimir archivos que ya pesan algo;
+    // los PDFs muy livianos no necesitan pasar por este proceso.
+    const UMBRAL_MINIMO_MB = 1.5;
+    if (archivoOriginal.size < UMBRAL_MINIMO_MB * 1024 * 1024) {
+        return archivoOriginal;
+    }
+
+    try {
+        const pdfjsLib = window["pdfjsLib"];
+        const { jsPDF } = window["jspdf"];
+
+        if (!pdfjsLib || !jsPDF) {
+            console.warn("Librerías de compresión no disponibles, se sube el archivo original");
+            return archivoOriginal;
+        }
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js";
+
+        const arrayBuffer = await archivoOriginal.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+        let pdfComprimido = null;
+        const ESCALA = 1.2;   // resolución moderada, suficiente para lectura en pantalla
+        const CALIDAD_JPEG = 0.6; // 60% de calidad, buen balance tamaño/legibilidad
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const viewport = page.getViewport({ scale: ESCALA });
+
+            const canvas = document.createElement("canvas");
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext("2d");
+
+            await page.render({ canvasContext: ctx, viewport }).promise;
+
+            const imgData = canvas.toDataURL("image/jpeg", CALIDAD_JPEG);
+            const orientacion = viewport.width > viewport.height ? "l" : "p";
+
+            if (!pdfComprimido) {
+                pdfComprimido = new jsPDF({
+                    orientation: orientacion,
+                    unit: "px",
+                    format: [viewport.width, viewport.height]
+                });
+            } else {
+                pdfComprimido.addPage([viewport.width, viewport.height], orientacion);
+            }
+
+            pdfComprimido.addImage(imgData, "JPEG", 0, 0, viewport.width, viewport.height);
+
+            if (onProgreso) onProgreso((i / pdf.numPages) * 100);
+
+            // Liberar memoria de la página procesada
+            page.cleanup();
+        }
+
+        const blobComprimido = pdfComprimido.output("blob");
+
+        // Si por alguna razón el resultado quedó más pesado que el original, usar el original
+        if (blobComprimido.size >= archivoOriginal.size) {
+            return archivoOriginal;
+        }
+
+        return new File([blobComprimido], archivoOriginal.name, { type: "application/pdf" });
+    } catch (error) {
+        console.warn("No se pudo comprimir el PDF, se sube el archivo original:", error);
+        return archivoOriginal;
+    }
+}
+
+/* =====================================
    SUBIR PDF A CLOUDINARY (con barra de progreso real vía XHR)
    Incluye reintentos automáticos ante fallos de red o timeout.
 ===================================== */
@@ -309,7 +389,7 @@ form.addEventListener("submit", async (e) => {
     const grado = selectGrado.value;
     const nombre = selectParticipante.value;
     const curso = selectCurso.value;
-    const archivo = inputArchivo.files[0];
+    let archivo = inputArchivo.files[0];
 
     if (!grado || !nombre || !curso) {
         alert("Complete carrera, participante y curso");
@@ -367,17 +447,24 @@ form.addEventListener("submit", async (e) => {
 
     barraProgreso.style.display = "block";
     progreso.style.width = "0%";
-    mensajeEstado.textContent = "Subiendo... No cierres esta pantalla ni bloquees el dispositivo";
     subidaEnCurso = true;
 
     try {
+        // Comprimir el PDF antes de subirlo (si aplica por tamaño)
+        mensajeEstado.textContent = "Optimizando PDF... no cierres esta pantalla";
+        archivo = await comprimirPDF(archivo, (pct) => {
+            progreso.style.width = `${pct * 0.3}%`; // la compresión ocupa el primer 30% de la barra
+        });
+
+        mensajeEstado.textContent = "Subiendo... No cierres esta pantalla ni bloquees el dispositivo";
+
         const carpeta = `tareas/${sanitizarParaCloudinary(grado)}/${sanitizarParaCloudinary(curso)}`;
 
         const resultado = await subirACloudinary(
             archivo,
             carpeta,
             (pct) => {
-                progreso.style.width = `${pct}%`;
+                progreso.style.width = `${30 + pct * 0.7}%`; // el 70% restante es la subida real
             },
             (intento, maxIntentos) => {
                 mensajeEstado.textContent = `Conexión inestable, reintentando (${intento}/${maxIntentos})... No cierres esta pantalla`;
