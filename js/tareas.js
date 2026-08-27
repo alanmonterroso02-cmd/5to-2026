@@ -275,6 +275,31 @@ async function subirACloudinary(archivo, carpeta, onProgreso, onReintento) {
 }
 
 /* =====================================
+   REGISTRAR ERROR EN FIRESTORE (para diagnóstico)
+===================================== */
+
+async function registrarError({ error, grado, nombre, curso, archivo }) {
+    try {
+        await addDoc(collection(db, "errores"), {
+            mensaje: error.message,
+            grado: grado || null,
+            nombre: nombre || null,
+            curso: curso || null,
+            archivoNombre: archivo?.name || "desconocido",
+            archivoTamanoMB: archivo ? (archivo.size / (1024 * 1024)).toFixed(2) : null,
+            userAgent: navigator.userAgent,
+            idioma: navigator.language,
+            conexion: navigator.connection?.effectiveType || "desconocida",
+            enLinea: navigator.onLine,
+            fecha: serverTimestamp()
+        });
+    } catch (errorGuardado) {
+        // Si falla el guardado del error, solo lo dejamos en consola
+        console.error("No se pudo guardar el error en Firestore:", errorGuardado);
+    }
+}
+
+/* =====================================
    SUBIR TAREA (PDF vía Cloudinary + metadatos en Firestore)
 ===================================== */
 
@@ -386,6 +411,9 @@ form.addEventListener("submit", async (e) => {
         mensajeEstado.textContent = `Error: ${error.message}`;
         barraProgreso.style.display = "none";
         subidaEnCurso = false;
+
+        // Guardar el error en Firestore para poder diagnosticarlo después
+        await registrarError({ error, grado, nombre, curso, archivo });
     }
 });
 
@@ -445,6 +473,37 @@ window.verTareas = async function () {
     }
 
     listaTareas.innerHTML = html;
+};
+
+/* =====================================
+   VER ERRORES REGISTRADOS (para diagnóstico)
+   Ejecuta verErrores() desde la consola del navegador para revisarlos.
+===================================== */
+
+window.verErrores = async function () {
+    const snap = await getDocs(collection(db, "errores"));
+
+    let docs = [];
+    snap.forEach(doc => docs.push(doc.data()));
+
+    docs.sort((a, b) => {
+        const ta = a.fecha?.toMillis ? a.fecha.toMillis() : 0;
+        const tb = b.fecha?.toMillis ? b.fecha.toMillis() : 0;
+        return tb - ta;
+    });
+
+    console.table(docs.map(d => ({
+        fecha: d.fecha?.toDate ? d.fecha.toDate().toLocaleString("es-GT") : "sin fecha",
+        nombre: d.nombre,
+        curso: d.curso,
+        mensaje: d.mensaje,
+        archivo: d.archivoNombre,
+        tamanoMB: d.archivoTamanoMB,
+        conexion: d.conexion,
+        dispositivo: d.userAgent
+    })));
+
+    return docs;
 };
 
 /* =====================================
