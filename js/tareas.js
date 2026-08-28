@@ -57,22 +57,44 @@ function obtenerInfoRed() {
    subidas multipart/form-data a dominios de terceros como Cloudinary.
    Aquí solo avisamos (no bloqueamos), para no impedir subir a nadie.
 ===================================== */
-function advertirSiAhorroDatos() {
+function advertirSiAhorroDatos(archivo) {
     const info = obtenerInfoRed();
+
     if (info.ahorroDatos) {
         mensajeEstado.textContent =
             "Detectamos que tu teléfono tiene activado el 'Ahorro de datos' en Chrome. " +
             "Esto a veces interfiere con la subida de archivos. Si falla, prueba " +
             "desactivándolo en Chrome → ⋮ → Configuración → Ahorro de datos.";
         mensajeEstado.className = "aviso-ahorro-datos";
+        return info;
     }
+
+    // Señal débil: Chrome a veces etiqueta la conexión como "4g" por el tipo de
+    // radio aunque la velocidad real medida (downlink) sea muy baja. Combinamos
+    // ambas señales en vez de confiar solo en "effectiveType".
+    const senalDebil = info.velocidadMbps !== null && info.velocidadMbps < 1.5;
+    const efectivoLento = ["slow-2g", "2g", "3g"].includes(info.tipoConexion);
+    if (senalDebil || efectivoLento) {
+        const archivoGrandeMB = archivo ? archivo.size / (1024 * 1024) : 0;
+        let mensaje =
+            "Tu señal de internet está débil o inestable en este momento. La subida puede " +
+            "tardar más o fallar a la mitad. Si puedes, conéctate a Wi-Fi o acércate a una " +
+            "zona con mejor señal antes de subir el archivo.";
+        if (archivoGrandeMB > 3) {
+            mensaje += ` Tu archivo pesa ${archivoGrandeMB.toFixed(1)} MB, lo cual con esta señal ` +
+                `tiene más riesgo de fallar; si puedes comprimirlo primero, mejor.`;
+        }
+        mensajeEstado.textContent = mensaje;
+        mensajeEstado.className = "aviso-senal-debil";
+    }
+
     return info;
 }
 
 // Revisamos apenas el usuario elige un archivo, para avisar antes de que intente subir
 inputArchivo?.addEventListener("change", () => {
     if (inputArchivo.files[0]) {
-        advertirSiAhorroDatos();
+        advertirSiAhorroDatos(inputArchivo.files[0]);
     }
 });
 
@@ -230,7 +252,13 @@ function intentoSubidaUnica(archivo, carpeta, onProgreso) {
             "POST",
             `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`
         );
-        xhr.timeout = 60000; // 60 segundos máximo por intento
+        // Timeout adaptativo: 60s base + tiempo extra según el tamaño del archivo,
+        // asumiendo una subida lenta de ~0.5 Mbps (peor caso realista en el aula).
+        // Sin esto, un PDF de varios MB en señal débil agota el timeout fijo
+        // antes de terminar, aunque la conexión nunca se haya cortado.
+        const MBPS_MINIMO_ASUMIDO = 0.5;
+        const segundosEstimados = (archivo.size * 8) / (MBPS_MINIMO_ASUMIDO * 1024 * 1024);
+        xhr.timeout = Math.max(60000, Math.ceil(segundosEstimados * 1000) + 30000);
         xhr.upload.onprogress = (e) => {
             if (e.lengthComputable && onProgreso) {
                 onProgreso((e.loaded / e.total) * 100);
@@ -402,11 +430,18 @@ form.addEventListener("submit", async (e) => {
         console.error(error);
         const infoRed = obtenerInfoRed();
         const pareceProblemaDeRed = error.message.includes("red") || error.message.includes("tiempo agotado");
+        const senalDebil = (infoRed.velocidadMbps !== null && infoRed.velocidadMbps < 1.5) ||
+            ["slow-2g", "2g", "3g"].includes(infoRed.tipoConexion);
         if (pareceProblemaDeRed && infoRed.ahorroDatos) {
             mensajeEstado.textContent =
                 `Error: ${error.message}. Tu teléfono tiene 'Ahorro de datos' activado en Chrome, ` +
                 `lo cual suele causar justamente este tipo de falla. Desactívalo en Chrome → ⋮ → ` +
                 `Configuración → Ahorro de datos, y vuelve a intentar.`;
+        } else if (pareceProblemaDeRed && senalDebil) {
+            mensajeEstado.textContent =
+                `Error: ${error.message}. Tu señal de internet estaba débil o inestable ` +
+                `(velocidad medida: ${infoRed.velocidadMbps ?? "?"} Mbps). Intenta conectarte a ` +
+                `Wi-Fi o buscar mejor señal antes de volver a subir el archivo.`;
         } else {
             mensajeEstado.textContent = `Error: ${error.message}`;
         }
