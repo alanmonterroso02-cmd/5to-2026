@@ -442,7 +442,7 @@ form.addEventListener("submit", async (e) => {
         return;
     }
 
-    const MAX_TAMANO_MB = 20;
+    const MAX_TAMANO_MB = 2000;
     const MAX_TAMANO_BYTES = MAX_TAMANO_MB * 1024 * 1024;
     if (archivo.size > MAX_TAMANO_BYTES) {
         const tamanoMB = (archivo.size / (1024 * 1024)).toFixed(1);
