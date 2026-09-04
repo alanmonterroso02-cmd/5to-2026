@@ -25,6 +25,9 @@ const selectFiltroCurso = document.getElementById("filtroCurso");
 const inputArchivo = document.getElementById("archivo");
 const limiteCurso = document.getElementById("limiteCurso");
 const form = document.getElementById("formTarea");
+// Botón de envío del formulario. Lo usamos para deshabilitarlo mientras
+// la subida está en curso y así evitar que el usuario lo presione varias veces.
+const botonSubir = form.querySelector('button[type="submit"]');
 const mensajeEstado = document.getElementById("mensajeEstado");
 const barraProgreso = document.getElementById("barraProgreso");
 const progreso = document.getElementById("progreso");
@@ -407,6 +410,13 @@ async function registrarError({ error, grado, nombre, curso, archivo }) {
 ===================================== */
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    // Protección contra doble clic / doble envío: si ya hay una subida en
+    // curso, ignoramos cualquier intento adicional de enviar el formulario.
+    if (subidaEnCurso) {
+        return;
+    }
+
     const grado = selectGrado.value;
     const nombre = selectParticipante.value;
     const curso = selectCurso.value;
@@ -442,7 +452,7 @@ form.addEventListener("submit", async (e) => {
         return;
     }
 
-    const MAX_TAMANO_MB = 2000;
+    const MAX_TAMANO_MB = 20;
     const MAX_TAMANO_BYTES = MAX_TAMANO_MB * 1024 * 1024;
     if (archivo.size > MAX_TAMANO_BYTES) {
         const tamanoMB = (archivo.size / (1024 * 1024)).toFixed(1);
@@ -467,6 +477,13 @@ form.addEventListener("submit", async (e) => {
     progreso.style.width = "0%";
     mensajeEstado.textContent = "Subiendo... No cierres esta pantalla ni bloquees el dispositivo";
     subidaEnCurso = true;
+    // Deshabilitamos el botón para que no se pueda presionar de nuevo
+    // mientras la subida está en curso.
+    if (botonSubir) {
+        botonSubir.disabled = true;
+        botonSubir.dataset.textoOriginal = botonSubir.dataset.textoOriginal || botonSubir.textContent;
+        botonSubir.textContent = "Subiendo...";
+    }
 
     try {
         const resultado = await subirADrive(
@@ -498,6 +515,10 @@ form.addEventListener("submit", async (e) => {
 
         mensajeEstado.textContent = "Tarea subida correctamente";
         subidaEnCurso = false;
+        if (botonSubir) {
+            botonSubir.disabled = false;
+            botonSubir.textContent = botonSubir.dataset.textoOriginal || "Subir tarea";
+        }
         setTimeout(() => {
             barraProgreso.style.display = "none";
             progreso.style.width = "0%";
@@ -525,6 +546,11 @@ form.addEventListener("submit", async (e) => {
         }
         barraProgreso.style.display = "none";
         subidaEnCurso = false;
+        // Reactivamos el botón para que el usuario pueda reintentar tras el error
+        if (botonSubir) {
+            botonSubir.disabled = false;
+            botonSubir.textContent = botonSubir.dataset.textoOriginal || "Subir tarea";
+        }
         // Guardar el error en Firestore para poder diagnosticarlo después
         await registrarError({ error, grado, nombre, curso, archivo });
     }
