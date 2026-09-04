@@ -3,6 +3,8 @@ import {
     collection,
     getDocs,
     addDoc,
+    doc,
+    setDoc,
     query,
     where,
     serverTimestamp,
@@ -10,12 +12,11 @@ import {
 } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-firestore.js";
 
 /* =====================================
-   CONFIGURACIÓN DE CLOUDINARY
-   Reemplaza estos dos valores con los tuyos
-   (Dashboard de Cloudinary → Cloud Name / Settings → Upload → Upload Presets)
+   CONFIGURACIÓN DE GOOGLE DRIVE (vía Google Apps Script)
+   Pega aquí la URL que te da Google al publicar el script como
+   "Aplicación web" (Deploy > New deployment > Web app).
 ===================================== */
-const CLOUDINARY_CLOUD_NAME = "e4x61s89";
-const CLOUDINARY_UPLOAD_PRESET = "ml_default";
+const DRIVE_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxbar-ZQxZ0mJShsIdFeTVrs7KV9fLGWmFzGSGZBp_6teVd91jl9prShhuMfngbi0_x/exec";
 
 const selectGrado = document.getElementById("grado");
 const selectParticipante = document.getElementById("participante");
@@ -54,7 +55,7 @@ function obtenerInfoRed() {
    ADVERTIR SI "AHORRO DE DATOS" ESTÁ ACTIVADO
    Cuando está activo, Chrome en Android puede enrutar las peticiones
    a través de un proxy compresor que en algunos casos interfiere con
-   subidas multipart/form-data a dominios de terceros como Cloudinary.
+   subidas de archivos grandes en general.
    Aquí solo avisamos (no bloqueamos), para no impedir subir a nadie.
 ===================================== */
 function advertirSiAhorroDatos(archivo) {
@@ -99,15 +100,31 @@ inputArchivo?.addEventListener("change", () => {
 });
 
 /* =====================================
-   SANITIZAR TEXTO PARA USAR COMO PARTE DE UN public_id DE CLOUDINARY
+   SANITIZAR TEXTO PARA USAR COMO NOMBRE DE CARPETA
    (quita tildes, '#', y cualquier otro carácter no permitido)
 ===================================== */
-function sanitizarParaCloudinary(str) {
+function sanitizarNombre(str) {
     return str
         .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // quita tildes
         .replace(/#/g, "")                                  // quita almohadillas
         .replace(/[^a-zA-Z0-9/_\- ]/g, "")                   // quita cualquier otro carácter inválido
         .trim();
+}
+
+/* =====================================
+   CONSTRUIR UN ID DE DOCUMENTO LEGIBLE PARA FIRESTORE
+   (en vez del ID aleatorio que genera addDoc). Junta curso + nombre del
+   alumno sin espacios ni tildes, ej: "Matematica_JuanPerez".
+   Si el mismo alumno vuelve a subir tarea para el mismo curso, esto
+   sobrescribe su entrega anterior en vez de crear una nueva (se
+   considera la entrega más reciente).
+===================================== */
+function idDocumentoTarea(curso, nombre) {
+    const limpiar = (str) =>
+        str
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // quita tildes
+            .replace(/[^a-zA-Z0-9]/g, "");                     // deja solo letras/números
+    return `${limpiar(curso)}_${limpiar(nombre)}`;
 }
 
 /* =====================================
@@ -236,65 +253,122 @@ function actualizarLimiteCurso() {
 selectCurso.addEventListener("change", actualizarLimiteCurso);
 
 /* =====================================
-   SUBIR PDF A CLOUDINARY (con barra de progreso real vía XHR)
-   Incluye reintentos automáticos ante fallos de red o timeout.
+   CONVERTIR ARCHIVO A BASE64 (necesario para enviarlo al Apps Script,
+   que solo puede recibir texto en el cuerpo de la petición)
 ===================================== */
-function intentoSubidaUnica(archivo, carpeta, onProgreso) {
+function archivoABase64(archivo) {
     return new Promise((resolve, reject) => {
-        const formData = new FormData();
-        formData.append("file", archivo);
-        formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
-        formData.append("folder", carpeta);
-        // Los PDF se suben como "raw" en Cloudinary (no son imagen ni video)
-        formData.append("resource_type", "raw");
-        const xhr = new XMLHttpRequest();
-        xhr.open(
-            "POST",
-            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/raw/upload`
-        );
-        // Timeout adaptativo: 60s base + tiempo extra según el tamaño del archivo,
-        // asumiendo una subida lenta de ~0.5 Mbps (peor caso realista en el aula).
-        // Sin esto, un PDF de varios MB en señal débil agota el timeout fijo
-        // antes de terminar, aunque la conexión nunca se haya cortado.
-        const MBPS_MINIMO_ASUMIDO = 0.5;
-        const segundosEstimados = (archivo.size * 8) / (MBPS_MINIMO_ASUMIDO * 1024 * 1024);
-        xhr.timeout = Math.max(60000, Math.ceil(segundosEstimados * 1000) + 30000);
-        xhr.upload.onprogress = (e) => {
-            if (e.lengthComputable && onProgreso) {
-                onProgreso((e.loaded / e.total) * 100);
-            }
+        const reader = new FileReader();
+        reader.onload = () => {
+            // reader.result es algo como "data:application/pdf;base64,JVBERi0x..."
+            // solo nos interesa la parte después de la coma
+            const base64 = reader.result.split(",")[1];
+            resolve(base64);
         };
-        xhr.onload = () => {
-            if (xhr.status >= 200 && xhr.status < 300) {
-                resolve(JSON.parse(xhr.responseText));
-            } else {
-                reject(new Error(`Error de Cloudinary: ${xhr.status} ${xhr.responseText}`));
-            }
-        };
-        xhr.onerror = () => reject(new Error("Error de red al subir el archivo"));
-        xhr.ontimeout = () => reject(new Error("La subida tardó demasiado (tiempo agotado)"));
-        xhr.send(formData);
+        reader.onerror = () => reject(new Error("No se pudo leer el archivo"));
+        reader.readAsDataURL(archivo);
     });
 }
 
-async function subirACloudinary(archivo, carpeta, onProgreso, onReintento) {
+/* =====================================
+   SUBIR PDF A GOOGLE DRIVE (vía Google Apps Script)
+   IMPORTANTE: aquí usamos fetch normal (SIN "no-cors") para poder LEER
+   la respuesta del servidor (url, id, name). Esto funciona sin
+   problemas de CORS porque:
+   - El Content-Type es "text/plain", que no dispara "preflight" (OPTIONS).
+   - Un Apps Script Web App publicado con acceso "Cualquier usuario"
+     responde con los headers CORS necesarios para que el navegador
+     nos deje leer el cuerpo de la respuesta.
+   Si en el futuro cambias el Content-Type a "application/json" sí
+   podría dispararse un preflight que Apps Script no maneja bien;
+   por eso se deja como "text/plain" a propósito.
+===================================== */
+function subirADriveUnaVez(archivo, grado, curso, base64, timeoutMs) {
+    const controlador = new AbortController();
+    const timer = setTimeout(() => controlador.abort(), timeoutMs);
+
+    const cuerpo = JSON.stringify({
+        grado,
+        curso,
+        archivoNombre: archivo.name,
+        mimeType: archivo.type || "application/pdf",
+        base64
+    });
+
+    return fetch(DRIVE_WEBAPP_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: cuerpo,
+        signal: controlador.signal
+    })
+        .then(async (res) => {
+            clearTimeout(timer);
+            let datos;
+            try {
+                datos = await res.json();
+            } catch (parseError) {
+                throw new Error("Respuesta inválida del servidor de Drive");
+            }
+            if (!datos.ok) {
+                throw new Error(datos.error || "El servidor de Drive reportó un error");
+            }
+            return datos; // { ok: true, url, id, name }
+        })
+        .catch((error) => {
+            clearTimeout(timer);
+            if (error.name === "AbortError") {
+                throw new Error("La subida tardó demasiado (tiempo agotado)");
+            }
+            // Si el error ya tiene un mensaje propio (ej. el que lanzamos arriba
+            // por "datos.ok === false" o JSON inválido), lo dejamos pasar tal cual.
+            if (error.message && error.message !== "Failed to fetch") {
+                throw error;
+            }
+            throw new Error("Error de red al subir el archivo");
+        });
+}
+
+async function subirADrive(archivo, grado, curso, onProgreso, onReintento) {
     const MAX_INTENTOS = 3;
     let ultimoError;
+    const base64 = await archivoABase64(archivo);
+
+    // Timeout adaptativo: 60s base + tiempo extra según el tamaño del archivo,
+    // asumiendo una subida lenta de ~0.5 Mbps (peor caso realista en el aula).
+    const MBPS_MINIMO_ASUMIDO = 0.5;
+    const segundosEstimados = (archivo.size * 8) / (MBPS_MINIMO_ASUMIDO * 1024 * 1024);
+    const timeoutMs = Math.max(60000, Math.ceil(segundosEstimados * 1000) + 30000);
+
     for (let intento = 1; intento <= MAX_INTENTOS; intento++) {
+        // Progreso simulado: fetch normal tampoco expone bytes enviados de
+        // forma sencilla para subidas, así que avanzamos la barra hasta 90%
+        // durante el tiempo estimado y la completamos al 100% cuando la
+        // petición termina.
+        let detenerAnimacion = false;
+        if (onProgreso) {
+            const inicio = Date.now();
+            const duracionEstimadaMs = Math.max(segundosEstimados * 1000, 2000);
+            const animar = () => {
+                if (detenerAnimacion) return;
+                const pct = Math.min(90, ((Date.now() - inicio) / duracionEstimadaMs) * 90);
+                onProgreso(pct);
+                requestAnimationFrame(animar);
+            };
+            animar();
+        }
         try {
-            return await intentoSubidaUnica(archivo, carpeta, onProgreso);
+            const datos = await subirADriveUnaVez(archivo, grado, curso, base64, timeoutMs);
+            detenerAnimacion = true;
+            if (onProgreso) onProgreso(100);
+            return { url: datos.url, id: datos.id, name: datos.name };
         } catch (error) {
+            detenerAnimacion = true;
             ultimoError = error;
             console.warn(`Intento ${intento} de ${MAX_INTENTOS} falló:`, error.message);
-            // Solo reintentamos si es un error de red o de tiempo agotado,
-            // no si es un error de validación de Cloudinary (400, etc.)
-            const esErrorDeRed =
-                error.message.includes("red") || error.message.includes("tiempo agotado");
-            if (!esErrorDeRed || intento === MAX_INTENTOS) {
+            if (intento === MAX_INTENTOS) {
                 throw ultimoError;
             }
             if (onReintento) onReintento(intento + 1, MAX_INTENTOS);
-            // Esperar un poco antes de reintentar (1s, luego 2s)
             await new Promise(r => setTimeout(r, intento * 1000));
         }
     }
@@ -329,7 +403,7 @@ async function registrarError({ error, grado, nombre, curso, archivo }) {
 }
 
 /* =====================================
-   SUBIR TAREA (PDF vía Cloudinary + metadatos en Firestore)
+   SUBIR TAREA (PDF vía Google Drive + metadatos en Firestore)
 ===================================== */
 form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -368,7 +442,7 @@ form.addEventListener("submit", async (e) => {
         return;
     }
 
-    const MAX_TAMANO_MB = 10;
+    const MAX_TAMANO_MB = 20;
     const MAX_TAMANO_BYTES = MAX_TAMANO_MB * 1024 * 1024;
     if (archivo.size > MAX_TAMANO_BYTES) {
         const tamanoMB = (archivo.size / (1024 * 1024)).toFixed(1);
@@ -380,11 +454,11 @@ form.addEventListener("submit", async (e) => {
     }
 
     if (
-        CLOUDINARY_CLOUD_NAME === "TU_CLOUD_NAME" ||
-        CLOUDINARY_UPLOAD_PRESET === "TU_UPLOAD_PRESET"
+        !DRIVE_WEBAPP_URL ||
+        DRIVE_WEBAPP_URL === "PON_AQUI_LA_URL_DE_TU_APPS_SCRIPT"
     ) {
         alert(
-            "Falta configurar Cloudinary en js/tareas.js (CLOUDINARY_CLOUD_NAME y CLOUDINARY_UPLOAD_PRESET)"
+            "Falta configurar la URL de Google Drive en js/tareas.js (DRIVE_WEBAPP_URL)"
         );
         return;
     }
@@ -395,10 +469,10 @@ form.addEventListener("submit", async (e) => {
     subidaEnCurso = true;
 
     try {
-        const carpeta = `tareas/${sanitizarParaCloudinary(grado)}/${sanitizarParaCloudinary(curso)}`;
-        const resultado = await subirACloudinary(
+        const resultado = await subirADrive(
             archivo,
-            carpeta,
+            sanitizarNombre(grado),
+            sanitizarNombre(curso),
             (pct) => {
                 progreso.style.width = `${pct}%`;
             },
@@ -408,13 +482,17 @@ form.addEventListener("submit", async (e) => {
         );
 
         mensajeEstado.textContent = "Guardando en la base de datos...";
-        await addDoc(collection(db, "tareas"), {
+        // El ID del documento es "curso_nombreDelAlumno" (legible, sin
+        // símbolos aleatorios). Si el alumno ya había subido tarea para
+        // este curso, esta entrega reemplaza a la anterior.
+        const idDoc = idDocumentoTarea(curso, nombre);
+        await setDoc(doc(db, "tareas", idDoc), {
             nombre,
             grado,
             curso,
             archivoNombre: archivo.name,
-            url: resultado.secure_url,
-            publicId: resultado.public_id,
+            url: resultado.url,
+            publicId: resultado.id,
             fecha: serverTimestamp()
         });
 
@@ -486,11 +564,12 @@ window.verTareas = async function () {
             <div class="item-tarea">
                 <h3>${d.nombre}</h3>
                 <p>${d.grado}</p>
-                <!--
-                <a href="${d.url}" target="_blank" rel="noopener">
-                    <button type="button">Ver / Descargar PDF</button>
-                </a>
-                -->
+                ${d.url
+                    ? `<a href="${d.url}" target="_blank" rel="noopener">
+                        <button type="button">Ver / Descargar PDF</button>
+                    </a>`
+                    : `<p><em>Sin link disponible (entrega antigua)</em></p>`
+                }
             </div>
         `;
     });
